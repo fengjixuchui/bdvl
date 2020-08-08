@@ -14,8 +14,11 @@
    * Fix outstanding issues. (from vlany)
    * Create a more manageable & _robust_ system of rootkit functionalities.
    * Working on anything in vlany just felt like a huge mess, I grew to hate this. I knew it could be better...
- * The only dependency inherently required is bash, for running all of the setup scripts.
-   * This won't be the case for much longer...
+ * The only dependency inherently required is bash, for running all of the setup scripts. (not really the case anymore)
+   * I have created the [nobash branch](https://github.com/kcaaj/bdvl/tree/nobash) which... eliminates any use of bash.
+   * The setup process is totally different & is designed to have all of the toggles enabled by default.
+   * The only manual configuration required is the editing of `BD_UNAME`, `BD_PWD` & `PAM_PORT` in `setup.py`.
+   * After that it's just a case of a `make` & using `auto.sh` to install on the target box.
  * When it comes to actual rootkit dependencies, there are only a few.
    * Most will already be installed.
    * Those that aren't can be installed with the available script.
@@ -105,25 +108,26 @@
    * Ample details within comments. 
  * See the table below.
 
-| Toggle                   | Info                                                           | Default status | Dependency | Ignored(?) |
-| :----------------------- | :------------------------------------------------------------- | :------------- | :--------- | :--------- |
-| __USE_PAM_BD__           | allows interactive login as a backdoor user via ssh            | on             | libpam     | no         |
-| __LOG_LOCAL_AUTH__       | log successful user authentications on the box                 | on             | libpam     | no         |
-| __HIDE_SELF__            | hides files and processes based on rootkit magic GID           | on             | -          | yes        |
-| __FORGE_MAPS__           | hides rootkit presence from process map files                  | on             | -          | yes        |
-| __HIDE_PORTS__           | hides ports & port ranges defined in 'hide_ports' file         | on             | -          | yes        |
-| __DO_REINSTALL__         | maintains the rootkit's preload file                           | on             | -          | yes        |
-| __DO_EVASIONS__          | hides rootkit presence from unsavoury processes                | on             | -          | yes        |
-| __READ_GID_FROM_FILE__   | magic GID value is changeable from backdoor shell via command. | on             | -          | no         |
-| __AUTO_GID_CHANGER__     | the magic GID will refresh every so often. see comments.       | on             | -          | no         |
-| __PATCH_SSHD_CONFIG__    | this will keep `UsePAM` & `PasswordAuthentication` enabled     | on             | -          | no         |
-| __BACKDOOR_UTIL__        | allows access to a host of backdoor utilities. see comments.   | on             | -          | yes        |
-| __SET_MAGIC_ENV_UNHIDE__ | set magic env var in `./bdv unhideself` shell process.         | on             | -          | no         |
-| __BACKDOOR_PKGMAN__      | safe package management access from backdoor shell.            | on             | -          | no         |
-| __LOG_SSH__              | logs login attempts from over ssh                              | on             | -          | no         |
-| __FILE_STEAL__           | attempts to steal FoI when opened by open/fopen                | on             | -          | no         |
-| __LINK_IF_ERR__          | link said FoI if we can't copy it                              | off            | -          | yes        |
-| __USE_CRYPT__            | to use or not to use libcrypt                                  | on             | libcrypt   | yes        |
+| Toggle                   | Info                                                            | Default status | Dependency | Ignored(?) |
+| :----------------------- | :-------------------------------------------------------------- | :------------- | :--------- | :--------- |
+| __USE_PAM_BD__           | allows interactive login as a backdoor user via ssh             | on             | libpam     | no         |
+| __LOG_LOCAL_AUTH__       | log successful user authentications on the box                  | on             | libpam     | no         |
+| __HIDE_SELF__            | hides files and processes based on rootkit magic GID            | on             | -          | yes        |
+| __FORGE_MAPS__           | hides rootkit presence from process map files                   | on             | -          | yes        |
+| __HIDE_PORTS__           | hides ports & port ranges defined in 'hide_ports' file          | on             | -          | yes        |
+| __DO_REINSTALL__         | maintains the rootkit's preload file                            | on             | -          | yes        |
+| __DO_EVASIONS__          | hides rootkit presence from unsavoury processes                 | on             | -          | yes        |
+| __READ_GID_FROM_FILE__   | magic GID value is changeable from backdoor shell via command.  | on             | -          | no         |
+| __AUTO_GID_CHANGER__     | the magic GID will refresh every so often. see comments.        | on             | -          | no         |
+| __HIDE_MY_ASS__          | keep track of all files created by rootkit user (for rehiding). | on             | -          | no         |
+| __PATCH_SSHD_CONFIG__    | this will keep `UsePAM` & `PasswordAuthentication` enabled      | on             | -          | no         |
+| __BACKDOOR_UTIL__        | allows access to a host of backdoor utilities. see comments.    | on             | -          | yes        |
+| __SET_MAGIC_ENV_UNHIDE__ | set magic env var in `./bdv unhideself` shell process.          | on             | -          | no         |
+| __BACKDOOR_PKGMAN__      | safe package management access from backdoor shell.             | on             | -          | no         |
+| __LOG_SSH__              | logs login attempts from over ssh                               | on             | -          | no         |
+| __FILE_STEAL__           | attempts to steal FoI when opened by open/fopen                 | on             | -          | no         |
+| __LINK_IF_ERR__          | link said FoI if we can't copy it                               | off            | -          | yes        |
+| __USE_CRYPT__            | to use or not to use libcrypt                                   | on             | libcrypt   | yes        |
 
 <hr>
 
@@ -140,6 +144,13 @@
    * This value can be found in [`inc/toggles.h`](https://github.com/kcaaj/bdvl/blob/master/inc/toggles.h)
    * The rootkit will not automatically change its GID when there are still rootkit processes running.
    * Otherwise there is a pretty high chance of being discovered since previous processes left with the previous GID would be visible.
+ * __HIDE_MY_ASS__ is intended to be a means of keeping track of files created, __outside of the installation directory__, by (you) the rootkit user.
+   * _For the sole purpose of rehiding them all when changing magic GID, be it manually or an automatically scheduled/timed change._
+   * Paths are automatically kept track of upon creation in a backdoor shell/general rootkit process.
+   * The file which contains all can be found in `my_ass` within the installation directory.
+     * Paths in here will be rehidden upon GID changes.
+     * If you are to unhide a path after its creation (path GID = 0), it will simply be ignored when the magic GID is being changed & files are subsequently being hidden.
+     * If you would like to stop a path from being automatically rehidden upon a GID change just remove the path's line.
 
 ##### Example changing magic GID
 <img src=https://i.imgur.com/vo4yn29.png alt="gid change example"/>
